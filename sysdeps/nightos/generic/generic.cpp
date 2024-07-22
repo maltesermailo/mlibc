@@ -3,6 +3,7 @@
 #include <mlibc/all-sysdeps.hpp>
 #include <mlibc/debug.hpp>
 #include <stdlib.h>
+#include <stdint.h>
 
 namespace mlibc {
     extern "C" long syscall_wrapper(long syscall_number, ...);
@@ -30,7 +31,9 @@ namespace mlibc {
     }
 
     int sys_tcb_set(void *pointer) {
-        return -ENOSYS;
+        syscall_wrapper(SYS_TEMP_TCB_SET, (uintptr_t) pointer);
+
+        return 0;
     }
 
     int sys_futex_tid() {
@@ -55,7 +58,7 @@ namespace mlibc {
     }
 
     int sys_read(int fd, void *buf, size_t count, ssize_t *bytes_read) {
-        int read = syscall_wrapper(SYS_READ, buf, count);
+        int read = syscall_wrapper(SYS_READ, fd, buf, count);
 
         *bytes_read = read;
 
@@ -64,7 +67,11 @@ namespace mlibc {
 
 
     int sys_write(int fd, const void *buf, size_t count, ssize_t *bytes_written) {
-        return -ENOSYS;
+        int written = syscall_wrapper(SYS_WRITE, fd, buf, count);
+
+        *bytes_written = written;
+
+        return 0;
     }
 
     int sys_seek(int fd, off_t offset, int whence, off_t *new_offset) {
@@ -72,15 +79,15 @@ namespace mlibc {
     }
 
     int sys_close(int fd) {
-        return -ENOSYS;
+        return 0;
     }
 
     int sys_anon_allocate(size_t size, void **pointer) {
-        return -ENOSYS;
+        return sys_vm_map(0, size, 0, 0, 0, 0, pointer);
     }
 
     int sys_anon_free(void *pointer, size_t size) {
-        return -ENOSYS;
+        return sys_vm_unmap(pointer, size);
     }
 
     [[gnu::weak]] int sys_stat(fsfd_target fsfdt, int fd, const char *path, int flags,
@@ -88,13 +95,27 @@ namespace mlibc {
         return -ENOSYS;
     }
     int sys_vm_map(void *hint, size_t size, int prot, int flags, int fd, off_t offset, void **window) {
-        return -ENOSYS;
+        long result = syscall_wrapper(SYS_MMAP, (uintptr_t) hint, size, prot, flags, fd, offset);
+
+        if(result == 0) {
+            return ENOMEM;
+        }
+
+        *window = (void*)result;
+
+        return 0;
     }
     int sys_vm_unmap(void *pointer, size_t size) {
-        return -ENOSYS;
+        long result = syscall_wrapper(SYS_MUNMAP, (uintptr_t) pointer, size);
+
+        if(result != 0) {
+            return sc_error(result);
+        }
+
+        return 0;
     }
     int sys_vm_protect(void *pointer, size_t size, int prot) {
-        return -ENOSYS;
+        return 0; //NOT IMPLEMENTED
     }
 
     int sys_vm_readahead(void *pointer, size_t size) {
