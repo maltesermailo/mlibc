@@ -1,12 +1,13 @@
 
 rtld_sources += files(
-	'generic/generic.cpp'
+	'generic/generic.cpp',
+	'generic/syscall.c'
 )
 
 libc_sources += files(
+	'generic/syscall.c',
 	'generic/entry.cpp',
-	'generic/generic.cpp',
-    'generic/syscall.c'
+	'generic/generic.cpp'
 )
 
 if not no_headers

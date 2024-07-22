@@ -1,7 +1,7 @@
 //
 // Created by Jannik on 21.06.2024.
 //
-#include <syscall.h>
+#include <nightos/syscall.h>
 #include <stdarg.h>
 
 long syscall_wrapper(long syscall_number, ...) {

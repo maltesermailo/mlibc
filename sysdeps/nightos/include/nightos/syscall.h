@@ -8,6 +8,5 @@
 #define SYS_WRITE 1
 #define SYS_OPEN 2
 
-long syscall_wrapper(long syscall_number, ...);
 
 #endif //NIGHTOS_SYSCALL_H
