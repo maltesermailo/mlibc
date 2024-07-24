@@ -8,15 +8,9 @@
 namespace mlibc {
     extern "C" long syscall_wrapper(long syscall_number, ...);
 
-    void sys_libc_log(const char *message) {
-
-    }
-
-    [[noreturn]] void sys_libc_panic() {
-        while (1) {
-
-        }
-    }
+    //==========================================================================//
+    //                        ANSI C SYSDEPS                                    //
+    //==========================================================================//
 
     [[noreturn]] void sys_exit(int status) {
 
@@ -30,6 +24,22 @@ namespace mlibc {
 
     }
 
+    //==========================================================================//
+    //                        INTERNAL SYSDEPS except write                     //
+    //==========================================================================//
+
+    void sys_libc_log(const char *message) {
+        syscall_wrapper(SYS_WRITE, 0, message, strlen(message));
+        syscall_wrapper(SYS_WRITE, 0, "\n", strlen(message));
+    }
+
+    [[noreturn]] void sys_libc_panic() {
+        sys_libc_log("PANIC!\n");
+        while (1) {
+
+        }
+    }
+
     int sys_tcb_set(void *pointer) {
         syscall_wrapper(SYS_TEMP_TCB_SET, (uintptr_t) pointer);
 
@@ -41,6 +51,10 @@ namespace mlibc {
     }
 
     int sys_futex_wait(int *pointer, int expected, const struct timespec *time) {
+        if(*pointer == expected) {
+
+        }
+
         return -ENOSYS;
     }
 
