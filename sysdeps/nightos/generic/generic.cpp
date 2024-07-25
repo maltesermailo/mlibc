@@ -51,15 +51,18 @@ namespace mlibc {
     }
 
     int sys_futex_wait(int *pointer, int expected, const struct timespec *time) {
-        if(*pointer == expected) {
+        if(__sync_fetch_and_add(pointer, 0) == expected) {
+            long nanosecondsToMs = time->tv_nsec / 1000000;
 
+            syscall_wrapper(SYS_FUTEX, pointer, expected, time->tv_sec * 1000);
+            return 0;
         }
 
-        return -ENOSYS;
+        return -EAGAIN;
     }
 
     int sys_futex_wake(int *pointer) {
-        return -ENOSYS;
+        return 0;
     }
 
 
