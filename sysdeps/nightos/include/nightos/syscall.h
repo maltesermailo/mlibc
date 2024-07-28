@@ -19,6 +19,8 @@
 #define SYS_BRK 12
 #define SYS_IOCTL 16
 #define SYS_TEMP_TCB_SET 29
+#define SYS_EXECVE 59
+#define SYS_EXIT 60
 #define SYS_FUTEX 202
 
 

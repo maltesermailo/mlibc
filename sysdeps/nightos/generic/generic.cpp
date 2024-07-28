@@ -13,16 +13,25 @@ namespace mlibc {
     //==========================================================================//
 
     [[noreturn]] void sys_exit(int status) {
-
+        syscall_wrapper(SYS_EXIT);
     }
 
     [[noreturn, gnu::weak]] void sys_thread_exit() {
-
+        syscall_wrapper(SYS_EXIT);
     }
 
     int sys_clock_get(int clock, time_t *secs, long *nanos) {
+        return 0;
+    }
+
+    [[gnu::weak]] int sys_prepare_stack(void **stack, void *entry, void *user_arg, void* tcb, size_t *stack_size, size_t *guard_size, void **stack_base) {
 
     }
+
+    [[gnu::weak]] int sys_clone(void *tcb, pid_t *pid_out, void *stack) {
+
+    }
+
 
     //==========================================================================//
     //                        INTERNAL SYSDEPS except write                     //
@@ -46,23 +55,20 @@ namespace mlibc {
         return 0;
     }
 
-    int sys_futex_tid() {
+    /*int sys_futex_tid() {
         return 0;
-    }
+    }*/
 
     int sys_futex_wait(int *pointer, int expected, const struct timespec *time) {
         if(__sync_fetch_and_add(pointer, 0) == expected) {
-            long nanosecondsToMs = time->tv_nsec / 1000000;
-
-            syscall_wrapper(SYS_FUTEX, pointer, expected, time->tv_sec * 1000);
-            return 0;
+            return syscall_wrapper(SYS_FUTEX, pointer, expected, time);
         }
 
         return -EAGAIN;
     }
 
     int sys_futex_wake(int *pointer) {
-        return 0;
+        return syscall_wrapper(SYS_FUTEX, pointer, 0, 0);
     }
 
 
