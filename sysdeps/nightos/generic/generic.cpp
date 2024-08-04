@@ -13,7 +13,7 @@ namespace mlibc {
     //==========================================================================//
 
     [[noreturn]] void sys_exit(int status) {
-        syscall_wrapper(SYS_EXIT);
+        syscall_wrapper(SYS_EXIT_GROUP);
     }
 
     [[noreturn, gnu::weak]] void sys_thread_exit() {
@@ -24,12 +24,97 @@ namespace mlibc {
         return 0;
     }
 
-    [[gnu::weak]] int sys_prepare_stack(void **stack, void *entry, void *user_arg, void* tcb, size_t *stack_size, size_t *guard_size, void **stack_base) {
+    int sys_clock_getres(int clock, time_t *secs, long *nanos) {
+        return 0;
+    }
 
+    [[gnu::weak]] int sys_prepare_stack(void **stack, void *entry, void *user_arg, void* tcb, size_t *stack_size, size_t *guard_size, void **stack_base) {
+        //Move to special class for threading later
+        return 0;
     }
 
     [[gnu::weak]] int sys_clone(void *tcb, pid_t *pid_out, void *stack) {
+        return ENOSYS;
+    }
 
+    int sys_flock(int fd, int options) {
+        return ENOSYS;
+    }
+
+    int sys_open_dir(const char *path, int *handle) {
+        int out = syscall_wrapper(SYS_OPEN, path, 0);
+
+        *handle = out;
+
+        return 0;
+    }
+
+    int sys_read_entries(int handle, void *buffer, size_t max_size,
+                         size_t *bytes_read) {
+        return 0;
+    }
+
+    int sys_pread(int fd, void *buf, size_t n, off_t off, ssize_t *bytes_read) {
+        long read = syscall_wrapper(SYS_PREAD64, fd, buf, n, off);
+        *bytes_read = read;
+
+        return 0;
+    }
+
+    int sys_sleep(time_t *secs, long *nanos) {
+        struct timespec spec = {
+                .tv_sec = *secs,
+                .tv_nsec = *nanos
+        };
+        syscall_wrapper(SYS_NANOSLEEP, &spec);
+
+        return 0;
+    }
+
+    int sys_isatty(int fd) {
+        return 0;
+    }
+
+    [[gnu::weak]] int sys_rmdir(const char *path) {
+        return ENOSYS;
+    }
+    [[gnu::weak]] int sys_unlinkat(int dirfd, const char *path, int flags) {
+        return ENOSYS;
+    }
+
+    [[gnu::weak]] int sys_rename(const char *path, const char *new_path) {
+        return ENOSYS;
+    }
+    [[gnu::weak]] int sys_renameat(int olddirfd, const char *old_path, int newdirfd, const char *new_path) {
+        return ENOSYS;
+    }
+
+    [[gnu::weak]] int sys_sigprocmask(int how, const sigset_t *__restrict set,
+                                      sigset_t *__restrict retrieve) {
+        return ENOSYS;
+    }
+    [[gnu::weak]] int sys_sigaction(int, const struct sigaction *__restrict,
+                                    struct sigaction *__restrict) {
+        return ENOSYS;
+    }
+
+    [[gnu::weak]] int sys_fork(pid_t *child) {
+        pid_t pid = syscall_wrapper(SYS_FORK);
+
+        *child = pid;
+        return 0;
+    }
+
+    int sys_waitpid(pid_t pid, int *status, int flags, struct rusage *ru, pid_t *ret_pid) {
+        return ENOSYS;
+    }
+
+    [[gnu::weak]] pid_t sys_getpid() {
+        return syscall_wrapper(SYS_GETPID);
+    }
+
+    [[gnu::weak]] int sys_kill(int, int) {
+        return ENOSYS;
     }
 
 
@@ -98,11 +183,15 @@ namespace mlibc {
     }
 
     int sys_seek(int fd, off_t offset, int whence, off_t *new_offset) {
-        return -ENOSYS;
+        long result = syscall_wrapper(SYS_LSEEK, fd, offset, whence);
+
+        *new_offset = result;
+
+        return 0;
     }
 
     int sys_close(int fd) {
-        return 0;
+        return syscall_wrapper(SYS_CLOSE, fd);
     }
 
     int sys_anon_allocate(size_t size, void **pointer) {

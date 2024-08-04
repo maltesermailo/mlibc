@@ -18,10 +18,16 @@
 #define SYS_MUNMAP 11
 #define SYS_BRK 12
 #define SYS_IOCTL 16
+#define SYS_PREAD64 17
+#define SYS_PWRITE64 18
 #define SYS_TEMP_TCB_SET 29
+#define SYS_NANOSLEEP 35
+#define SYS_GETPID 39
+#define SYS_FORK 57
 #define SYS_EXECVE 59
 #define SYS_EXIT 60
 #define SYS_FUTEX 202
+#define SYS_EXIT_GROUP 231
 
 
 #include <stdint.h>

@@ -31,7 +31,6 @@ LibraryGuard::LibraryGuard() {
 extern "C" void __mlibc_entry(uintptr_t *entry_stack, int (*main_fn)(int argc, char *argv[], char *env[])) {
     int fd;
     ssize_t written;
-    mlibc::sys_open("/dev/console0", 0, 0, &fd);
     mlibc::sys_write(0, "Hi", sizeof("Hi"), &written);
 
     __dlapi_enter(entry_stack);
