@@ -33,10 +33,6 @@ namespace mlibc {
         return 0;
     }
 
-    [[gnu::weak]] int sys_clone(void *tcb, pid_t *pid_out, void *stack) {
-        return ENOSYS;
-    }
-
     int sys_flock(int fd, int options) {
         return ENOSYS;
     }

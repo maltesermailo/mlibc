@@ -257,14 +257,11 @@ elif host_machine.system() == 'dripos'
 	libc_include_dirs += include_directories('sysdeps/dripos/include')
 	subdir('sysdeps/dripos')
 elif host_machine.system() == 'nightos'
-	#We don't want anything besides ANSI C at the moment
+	#We don't want anything besides ANSI C and POSIX at the moment
 	disable_linux_option = true
-	disable_glibc_option = true
-	disable_bsd_option = true
 	disable_crypt_option = true
 	disable_iconv_option = true
 	disable_intl_option = true
-	disable_posix_option = true
 
 	rtld_include_dirs += include_directories('sysdeps/nightos/include')
 	libc_include_dirs += include_directories('sysdeps/nightos/include')

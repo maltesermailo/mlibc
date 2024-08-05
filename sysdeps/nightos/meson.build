@@ -5,17 +5,15 @@ rtld_sources += files(
 )
 
 libc_sources += files(
+	'generic/thread.cpp',
+	host_machine.cpu_family() / 'thread_entry.S'
+)
+
+libc_sources += files(
 	'generic/syscall.c',
 	'generic/entry.cpp',
 	'generic/generic.cpp'
 )
-
-if not disable_posix_option
-	libc_sources += files(
-		'generic/thread.cpp',
-		host_machine.cpu_family() / 'thread_entry.S'
-	)
-endif
 
 if not no_headers
 	install_headers(

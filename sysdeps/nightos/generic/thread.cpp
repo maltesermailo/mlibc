@@ -6,6 +6,10 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <errno.h>
+#include <errno.h>
+#include <nightos/syscall.h>
+#include <mlibc/debug.hpp>
+#include <mlibc/debug.hpp>
 
 extern "C" void __mlibc_enter_thread(void *entry, void *user_arg) {
     // The linux kernel already sets the TCB in sys_clone().
@@ -26,6 +30,19 @@ extern "C" void __mlibc_enter_thread(void *entry, void *user_arg) {
 namespace mlibc {
 
     static constexpr size_t default_stacksize = 0x200000;
+
+
+    [[gnu::weak]] int sys_clone(void *tcb, pid_t *pid_out, void *stack) {
+        unsigned long flags = CLONE_VM | CLONE_FS | CLONE_FILES | CLONE_SIGHAND
+                              | CLONE_THREAD | CLONE_SYSVSEM | CLONE_SETTLS
+                              | CLONE_PARENT_SETTID;
+
+        auto ret = __mlibc_spawn_thread(flags, stack, pid_out, NULL, tcb);
+        if (ret < 0)
+            return ret;
+
+        return 0;
+    }
 
     int sys_prepare_stack(void **stack, void *entry, void *user_arg, void *tcb, size_t *stack_size, size_t *guard_size, void **stack_base) {
         (void)tcb;
