@@ -35,10 +35,10 @@ long syscall_wrapper(long syscall_number, ...) {
             );
 
     // Set errno if there's an error
-    if (ret < 0) {
+    /*if (ret < 0) {
         //errno = -ret;
         ret = -1;
-    }
+    }*/
 
     return ret;
 }

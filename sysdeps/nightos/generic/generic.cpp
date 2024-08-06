@@ -28,11 +28,6 @@ namespace mlibc {
         return 0;
     }
 
-    [[gnu::weak]] int sys_prepare_stack(void **stack, void *entry, void *user_arg, void* tcb, size_t *stack_size, size_t *guard_size, void **stack_base) {
-        //Move to special class for threading later
-        return 0;
-    }
-
     int sys_flock(int fd, int options) {
         return ENOSYS;
     }
@@ -164,22 +159,32 @@ namespace mlibc {
     int sys_read(int fd, void *buf, size_t count, ssize_t *bytes_read) {
         int read = syscall_wrapper(SYS_READ, fd, buf, count);
 
-        *bytes_read = read;
+        *bytes_read = 0;
+        if(read >= 0) {
+            *bytes_read = read;
+        }
 
-        return 0;
+        return read < 0 ? sc_error(read) : 0;
     }
 
 
     int sys_write(int fd, const void *buf, size_t count, ssize_t *bytes_written) {
         int written = syscall_wrapper(SYS_WRITE, fd, buf, count);
 
-        *bytes_written = written;
+        *bytes_written = 0;
+        if(written >= 0) {
+            *bytes_written = written;
+        }
 
-        return 0;
+        return written < 0 ? sc_error(written) : 0;
     }
 
     int sys_seek(int fd, off_t offset, int whence, off_t *new_offset) {
         long result = syscall_wrapper(SYS_LSEEK, fd, offset, whence);
+
+        if(result < 0) {
+            return sc_error(result);
+        }
 
         *new_offset = result;
 
