@@ -7,6 +7,61 @@
 #define SYS_READ 0
 #define SYS_WRITE 1
 #define SYS_OPEN 2
+#define SYS_CLOSE 3
+#define SYS_STAT 4
+#define SYS_FSTAT 5
+#define SYS_LSTAT 6
+#define SYS_POLL 7
+#define SYS_LSEEK 8
+#define SYS_MMAP 9
+#define SYS_MPROTECT 10
+#define SYS_MUNMAP 11
+#define SYS_BRK 12
+#define SYS_IOCTL 16
+#define SYS_PREAD64 17
+#define SYS_PWRITE64 18
+#define SYS_TEMP_TCB_SET 29
+#define SYS_NANOSLEEP 35
+#define SYS_GETPID 39
+#define SYS_FORK 57
+#define SYS_EXECVE 59
+#define SYS_EXIT 60
+#define SYS_FUTEX 202
+#define SYS_EXIT_GROUP 231
 
+#define CLONE_VM 0x00000100
+#define CLONE_FS 0x00000200
+#define CLONE_FILES	0x00000400
+#define CLONE_SIGHAND 0x00000800
+#define CLONE_PTRACE 0x00002000
+#define CLONE_VFORK 0x00004000
+#define CLONE_PARENT 0x00008000
+#define CLONE_THREAD 0x00010000
+#define CLONE_NEWNS 0x00020000
+#define CLONE_SYSVSEM 0x00040000
+#define CLONE_SETTLS 0x00080000
+#define CLONE_PARENT_SETTID 0x00100000
+#define CLONE_CHILD_CLEARTID 0x00200000
+#define CLONE_DETACHED 0x00400000
+#define CLONE_UNTRACED 0x00800000
+#define CLONE_CHILD_SETTID 0x01000000
+#define CLONE_NEWCGROUP 0x02000000
+#define CLONE_NEWUTS 0x04000000
+#define CLONE_NEWIPC 0x08000000
+#define CLONE_NEWUSER 0x10000000
+#define CLONE_NEWPID 0x20000000
+#define CLONE_NEWNET 0x40000000
+#define CLONE_IO 0x80000000
+
+
+#include <stdint.h>
+
+static inline int
+sc_error(uintptr_t ret)
+{
+    if (ret > -4096UL)
+        return -ret;
+    return 0;
+}
 
 #endif //NIGHTOS_SYSCALL_H
