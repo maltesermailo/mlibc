@@ -8,6 +8,12 @@
 namespace mlibc {
     extern "C" long syscall_wrapper(long syscall_number, ...);
 
+    [[gnu::weak]] int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
+        syscall_wrapper(SYS_IOCTL, fd, request);
+
+        return 0;
+    }
+
     //==========================================================================//
     //                        ANSI C SYSDEPS                                    //
     //==========================================================================//
