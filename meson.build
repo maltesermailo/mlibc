@@ -258,7 +258,7 @@ elif host_machine.system() == 'dripos'
 	subdir('sysdeps/dripos')
 elif host_machine.system() == 'nightos'
 	#We don't want anything besides ANSI C and POSIX at the moment
-	disable_linux_option = true
+	disable_linux_option = false
 	disable_crypt_option = true
 	disable_iconv_option = true
 	disable_intl_option = true
