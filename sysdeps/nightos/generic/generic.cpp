@@ -4,15 +4,50 @@
 #include <mlibc/debug.hpp>
 #include <stdlib.h>
 #include <stdint.h>
+#include <string.h>
 
 namespace mlibc {
     extern "C" long syscall_wrapper(long syscall_number, ...);
 
     [[gnu::weak]] int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
-        syscall_wrapper(SYS_IOCTL, fd, request);
+        syscall_wrapper(SYS_IOCTL, fd, request, arg);
 
         return 0;
     }
+
+    uid_t sys_getuid(){
+        return syscall_wrapper(SYS_GETUID);
+    }
+
+    gid_t sys_getgid(){
+        return syscall_wrapper(SYS_GETGID);
+    }
+
+    uid_t sys_geteuid(){
+        return syscall_wrapper(SYS_GETUID);
+    }
+
+    gid_t sys_getegid(){
+        return syscall_wrapper(SYS_GETGID);
+    }
+
+    pid_t sys_getppid(void) {
+        return syscall_wrapper(SYS_GETPPID);
+    }
+
+#ifndef MLIBC_BUILDING_RTLD
+    int sys_ttyname(int fd, char *buf, size_t size) {
+        if(!mlibc::sys_isatty(fd)) {
+            return ENOTTY;
+        }
+
+        //TODO: Once PTYs are added, this should be changed.
+        strcpy(buf, "/dev/console0");
+        size = strlen("/dev/console0");
+
+        return 0;
+    }
+#endif
 
     //==========================================================================//
     //                        ANSI C SYSDEPS                                    //
@@ -69,7 +104,13 @@ namespace mlibc {
     }
 
     int sys_isatty(int fd) {
-        return 0;
+        //Standard output is connected directly to the console
+        //TODO: Change that when switching to graphic output
+        if(fd <= 3) {
+            return 1;
+        }
+
+        return ENOTTY;
     }
 
     [[gnu::weak]] int sys_rmdir(const char *path) {

@@ -26,6 +26,9 @@
 #define SYS_FORK 57
 #define SYS_EXECVE 59
 #define SYS_EXIT 60
+#define SYS_GETUID 102
+#define SYS_GETGID 104
+#define SYS_GETPPID 110
 #define SYS_FUTEX 202
 #define SYS_EXIT_GROUP 231
 
