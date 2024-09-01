@@ -6,12 +6,34 @@
 #include <stdint.h>
 #include <string.h>
 
+#include <bits/ensure.h>
+
 namespace mlibc {
     extern "C" long syscall_wrapper(long syscall_number, ...);
 
     [[gnu::weak]] int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
         syscall_wrapper(SYS_IOCTL, fd, request, arg);
 
+        return 0;
+    }
+
+    int sys_poll(struct pollfd *fds, nfds_t count, int timeout, int *num_events) {
+        int ret = syscall_wrapper(SYS_POLL, fds, count, timeout);
+
+        if (int e = sc_error(ret); e)
+            return e;
+
+        *num_events = ret;
+
+        return 0;
+    }
+
+    int sys_dup(int fd, int flags, int *newfd) {
+        __ensure(!flags);
+        int ret = syscall_wrapper(SYS_DUP, fd);
+        if (int e = sc_error(ret); e)
+            return e;
+        *newfd = ret;
         return 0;
     }
 
@@ -33,6 +55,16 @@ namespace mlibc {
 
     pid_t sys_getppid(void) {
         return syscall_wrapper(SYS_GETPPID);
+    }
+
+    pid_t sys_getpgid(pid_t pid, pid_t* out) {
+        auto ret = syscall_wrapper(SYS_GETPGRP, pid);
+        if(int e = sc_error(ret); e)
+            return e;
+
+        *out = ret;
+
+        return 0;
     }
 
 #ifndef MLIBC_BUILDING_RTLD
@@ -103,11 +135,15 @@ namespace mlibc {
         return 0;
     }
 
+    int sys_getcwd(char *buffer, size_t size){
+        return syscall_wrapper(SYS_GETCWD, buffer, size);
+    }
+
     int sys_isatty(int fd) {
         //Standard output is connected directly to the console
         //TODO: Change that when switching to graphic output
         if(fd <= 3) {
-            return 1;
+            return 0;
         }
 
         return ENOTTY;
@@ -161,14 +197,15 @@ namespace mlibc {
     //==========================================================================//
 
     void sys_libc_log(const char *message) {
+        syscall_wrapper(SYS_WRITE, 0, "MLIBC: ", strlen("MLIBC: "));
         syscall_wrapper(SYS_WRITE, 0, message, strlen(message));
-        syscall_wrapper(SYS_WRITE, 0, "\n", strlen(message));
+        syscall_wrapper(SYS_WRITE, 0, "\n", 1);
     }
 
     [[noreturn]] void sys_libc_panic() {
-        sys_libc_log("PANIC!\n");
+        sys_libc_log("PANIC EXIT!\n");
         while (1) {
-
+            sys_exit(-1);
         }
     }
 

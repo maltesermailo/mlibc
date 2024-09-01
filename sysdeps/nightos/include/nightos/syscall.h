@@ -21,14 +21,18 @@
 #define SYS_PREAD64 17
 #define SYS_PWRITE64 18
 #define SYS_TEMP_TCB_SET 29
+#define SYS_DUP 32
+#define SYS_DUP2 33
 #define SYS_NANOSLEEP 35
 #define SYS_GETPID 39
 #define SYS_FORK 57
 #define SYS_EXECVE 59
 #define SYS_EXIT 60
+#define SYS_GETCWD 79
 #define SYS_GETUID 102
 #define SYS_GETGID 104
 #define SYS_GETPPID 110
+#define SYS_GETPGRP 111
 #define SYS_FUTEX 202
 #define SYS_EXIT_GROUP 231
 
