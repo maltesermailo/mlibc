@@ -6,10 +6,7 @@ rtld_sources += files(
 
 libc_sources += files(
 	'generic/thread.cpp',
-	host_machine.cpu_family() / 'thread_entry.S'
-)
-
-libc_sources += files(
+	host_machine.cpu_family() / 'thread_entry.S',
 	'generic/syscall.c',
 	'generic/entry.cpp',
 	'generic/generic.cpp'
@@ -62,6 +59,12 @@ if not no_headers
 		'include/abi-bits/xattr.h',
 		subdir: 'abi-bits',
 		follow_symlinks: true
+	)
+
+	install_headers(
+		'include/asm/ioctl.h',
+		'include/asm/ioctls.h',
+		subdir: 'asm',
 	)
 
 	install_headers(

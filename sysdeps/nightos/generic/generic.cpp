@@ -4,15 +4,168 @@
 #include <mlibc/debug.hpp>
 #include <stdlib.h>
 #include <stdint.h>
+#include <string.h>
+#include <fcntl.h>
+
+#include <bits/ensure.h>
 
 namespace mlibc {
     extern "C" long syscall_wrapper(long syscall_number, ...);
 
     [[gnu::weak]] int sys_ioctl(int fd, unsigned long request, void *arg, int *result) {
-        syscall_wrapper(SYS_IOCTL, fd, request);
+        syscall_wrapper(SYS_IOCTL, fd, request, arg);
 
         return 0;
     }
+
+    int sys_ppoll(struct pollfd *fds, int nfds, const struct timespec *timeout,
+                  const sigset_t *sigmask, int *num_events) {
+        int ret = syscall_wrapper(SYS_PPOLL, fds, nfds, timeout, sigmask);
+
+        if (int e = sc_error(ret); e)
+            return e;
+
+        *num_events = ret;
+
+        return 0;
+    }
+
+#ifndef MLIBC_BUILDING_RTLD
+    int
+    sys_pselect(int nfds, fd_set *read_set, fd_set *write_set, fd_set *except_set,
+                const struct timespec *timeout, const sigset_t *sigmask, int *num_events)
+    {
+        struct pollfd *fds = (struct pollfd *)malloc(
+                nfds * sizeof(struct pollfd));
+
+        for (int i = 0; i < nfds; i++) {
+            struct pollfd *fd = &fds[i];
+            memset(fd, 0, sizeof(struct pollfd));
+
+            if (read_set && FD_ISSET(i, read_set))
+                fd->events |= POLLIN;
+            if (write_set && FD_ISSET(i, write_set))
+                fd->events |= POLLOUT;
+            if (except_set && FD_ISSET(i, except_set))
+                fd->events |= POLLPRI;
+
+            if (!fd->events) {
+                fd->fd = -1;
+                continue;
+            }
+
+            fd->fd = i;
+        }
+
+        int e = sys_ppoll(fds, nfds, timeout, sigmask, num_events);
+
+        if (e != 0) {
+            free(fds);
+            return e;
+        }
+
+        fd_set res_read_set;
+        fd_set res_write_set;
+        fd_set res_except_set;
+        FD_ZERO(&res_read_set);
+        FD_ZERO(&res_write_set);
+        FD_ZERO(&res_except_set);
+
+        for (int i = 0; i < nfds; i++) {
+            struct pollfd *fd = &fds[i];
+
+            if (read_set && FD_ISSET(i, read_set) &&
+                fd->revents & (POLLIN | POLLERR | POLLHUP)) {
+                FD_SET(i, &res_read_set);
+            }
+
+            if (write_set && FD_ISSET(i, write_set) &&
+                fd->revents & (POLLOUT | POLLERR | POLLHUP)) {
+                FD_SET(i, &res_write_set);
+            }
+
+            if (except_set && FD_ISSET(i, except_set) &&
+                fd->revents & POLLPRI) {
+                FD_SET(i, &res_except_set);
+            }
+        }
+
+        free(fds);
+
+        if (read_set)
+            memcpy(read_set, &res_read_set, sizeof(fd_set));
+        if (write_set)
+            memcpy(write_set, &res_write_set, sizeof(fd_set));
+        if (except_set)
+            memcpy(except_set, &res_except_set, sizeof(fd_set));
+
+        return 0;
+    }
+#endif
+
+    int sys_poll(struct pollfd *fds, nfds_t count, int timeout, int *num_events) {
+        int ret = syscall_wrapper(SYS_POLL, fds, count, timeout);
+
+        if (int e = sc_error(ret); e)
+            return e;
+
+        *num_events = ret;
+
+        return 0;
+    }
+
+    int sys_dup(int fd, int flags, int *newfd) {
+        __ensure(!flags);
+        int ret = syscall_wrapper(SYS_DUP, fd);
+        if (int e = sc_error(ret); e)
+            return e;
+        *newfd = ret;
+        return 0;
+    }
+
+    uid_t sys_getuid(){
+        return syscall_wrapper(SYS_GETUID);
+    }
+
+    gid_t sys_getgid(){
+        return syscall_wrapper(SYS_GETGID);
+    }
+
+    uid_t sys_geteuid(){
+        return syscall_wrapper(SYS_GETUID);
+    }
+
+    gid_t sys_getegid(){
+        return syscall_wrapper(SYS_GETGID);
+    }
+
+    pid_t sys_getppid(void) {
+        return syscall_wrapper(SYS_GETPPID);
+    }
+
+    pid_t sys_getpgid(pid_t pid, pid_t* out) {
+        auto ret = syscall_wrapper(SYS_GETPGRP, pid);
+        if(int e = sc_error(ret); e)
+            return e;
+
+        *out = ret;
+
+        return 0;
+    }
+
+#ifndef MLIBC_BUILDING_RTLD
+    int sys_ttyname(int fd, char *buf, size_t size) {
+        if(!mlibc::sys_isatty(fd)) {
+            return ENOTTY;
+        }
+
+        //TODO: Once PTYs are added, this should be changed.
+        strcpy(buf, "/dev/console0");
+        size = strlen("/dev/console0");
+
+        return 0;
+    }
+#endif
 
     //==========================================================================//
     //                        ANSI C SYSDEPS                                    //
@@ -68,8 +221,18 @@ namespace mlibc {
         return 0;
     }
 
+    int sys_getcwd(char *buffer, size_t size){
+        return syscall_wrapper(SYS_GETCWD, buffer, size);
+    }
+
     int sys_isatty(int fd) {
-        return 0;
+        //Standard output is connected directly to the console
+        //TODO: Change that when switching to graphic output
+        if(fd <= 3) {
+            return 0;
+        }
+
+        return ENOTTY;
     }
 
     [[gnu::weak]] int sys_rmdir(const char *path) {
@@ -120,14 +283,15 @@ namespace mlibc {
     //==========================================================================//
 
     void sys_libc_log(const char *message) {
+        syscall_wrapper(SYS_WRITE, 0, "MLIBC: ", strlen("MLIBC: "));
         syscall_wrapper(SYS_WRITE, 0, message, strlen(message));
-        syscall_wrapper(SYS_WRITE, 0, "\n", strlen(message));
+        syscall_wrapper(SYS_WRITE, 0, "\n", 1);
     }
 
     [[noreturn]] void sys_libc_panic() {
-        sys_libc_log("PANIC!\n");
+        sys_libc_log("PANIC EXIT!\n");
         while (1) {
-
+            sys_exit(-1);
         }
     }
 
