@@ -35,6 +35,7 @@
 #define SYS_GETPGRP 111
 #define SYS_FUTEX 202
 #define SYS_EXIT_GROUP 231
+#define SYS_PPOLL 271
 
 #define CLONE_VM 0x00000100
 #define CLONE_FS 0x00000200
