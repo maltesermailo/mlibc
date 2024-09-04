@@ -8,6 +8,7 @@
 #include <fcntl.h>
 
 #include <bits/ensure.h>
+#include <asm/ioctls.h>
 
 namespace mlibc {
     extern "C" long syscall_wrapper(long syscall_number, ...);
@@ -102,6 +103,49 @@ namespace mlibc {
         return 0;
     }
 #endif
+
+    int sys_fcntl(int fd, int request, va_list args, int* result){
+        if(request == F_DUPFD){
+            return sys_dup(fd, 0, result);
+        } else if (request == F_DUPFD_CLOEXEC) {
+            return sys_dup(fd, O_CLOEXEC, result);
+        } else if(request == F_GETFD){
+            *result = 0;
+            return 0;
+        } else if(request == F_SETFD){
+            /*if(va_arg(args, int) & FD_CLOEXEC) {
+                return sys_ioctl(fd, FIOCLEX, NULL, result);
+            } else {
+                return sys_ioctl(fd, FIONCLEX, NULL, result);
+            }*/
+            return ENOSYS;
+        } else if(request == F_GETFL){
+            return ENOSYS;
+
+            /*int ret = syscall(SYS_GET_FILE_STATUS_FLAGS, fd);
+            if(ret < 0){
+                return -ret;
+            }
+
+            *result = ret;
+            return 0;*/
+        } else if(request == F_SETFL){
+            /*int ret = syscall(SYS_SET_FILE_STATUS_FLAGS, fd, va_arg(args, int));
+            return -ret;*/
+
+            return ENOSYS;
+        } else {
+            infoLogger() << "mlibc: sys_fcntl unsupported request (" << request << ")" << frg::endlog;
+            return EINVAL;
+        }
+    }
+
+    int sys_tcgetattr(int fd, struct termios *attr) {
+        int ret = syscall_wrapper(SYS_IOCTL, fd, TCGETS, attr);
+        if (int e = sc_error(ret); e)
+            return e;
+        return 0;
+    }
 
     int sys_poll(struct pollfd *fds, nfds_t count, int timeout, int *num_events) {
         int ret = syscall_wrapper(SYS_POLL, fds, count, timeout);
