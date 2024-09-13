@@ -147,6 +147,23 @@ namespace mlibc {
         return 0;
     }
 
+    int sys_tcsetattr(int fd, int optional_action, const struct termios *attr) {
+        int req;
+
+        switch (optional_action) {
+            case TCSANOW: req = TCSETS; break;
+            case TCSADRAIN: req = TCSETSW; break;
+            case TCSAFLUSH: req = TCSETSF; break;
+            default: return EINVAL;
+        }
+
+        int ret = syscall_wrapper(SYS_IOCTL, fd, req, attr);
+        if (int e = sc_error(ret); e)
+            return e;
+        return 0;
+    }
+
+
     int sys_poll(struct pollfd *fds, nfds_t count, int timeout, int *num_events) {
         int ret = syscall_wrapper(SYS_POLL, fds, count, timeout);
 
