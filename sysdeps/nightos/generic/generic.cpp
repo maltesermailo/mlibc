@@ -327,7 +327,13 @@ namespace mlibc {
     }
 
     int sys_waitpid(pid_t pid, int *status, int flags, struct rusage *ru, pid_t *ret_pid) {
-        return ENOSYS;
+        auto ret = syscall_wrapper(SYS_WAIT4, pid, status, flags, ru);
+        if(int e = sc_error(ret); e)
+            return e;
+
+        *ret_pid = ret;
+
+        return 0;
     }
 
     [[gnu::weak]] pid_t sys_getpid() {

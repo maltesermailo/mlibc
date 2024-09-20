@@ -28,6 +28,7 @@
 #define SYS_FORK 57
 #define SYS_EXECVE 59
 #define SYS_EXIT 60
+#define SYS_WAIT4 61
 #define SYS_GETCWD 79
 #define SYS_GETUID 102
 #define SYS_GETGID 104
